@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--status用于设置log4j2自身内部的信息输出;monitorInterval:定时重新加载配置-->
+<Configuration status="WARN" monitorInterval="1800">
+    <Properties>
+        <!-- spring暂不支持log4j的profile，目前仅支持logback，当然可以用不同的log4j2.xml -->
+        <!-- <Property name="pattern-format">%d{yyyy-MM-dd HH:mm:ss}-[%p]-[%t]-[%l] %m%n</Property> -->
+        <!-- 注意：使用%l参数性能会下降1.3 - 5 times（官方数据），并发量不大的情况可以使用 -->
+        <Property name="pattern-format">%d{yyyy-MM-dd HH:mm:ss.SSS}-[%p] %l %m%n</Property>
+        <Property name="charset">UTF-8</Property>
+        <Property name="includeLocation">true</Property>
+        <Property name="log-path">${sys:user.home}/logs/springboot-action</Property>
+        <Property name="level">INFO</Property>
+    </Properties>
+    <Appenders>
+
+        <!--  ACCEPT（放行）、DENY（拒绝）、NEUTRAL（不做任何操作)        -->
+        <!--  onMatch  >= level  onMatch指的是日志级别大于等于level时的操作      -->
+        <!--  onMismatch < levle onMismatch表示日志级别小于level时的操作,         -->
+        <!--  log 级别  off>fatal>error>warn>info>debug>trace>all,                            -->
+        <!--   通过添加两组 ThresholdFilter  可以达到一个级别的log一个文件的目的,-->
+
+        <!--输出控制台的配置-->
+        <Console name="Console" target="SYSTEM_OUT">
+            <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="ACCEPT"/>
+            <PatternLayout charset="${charset}" pattern="${pattern-format}"/>
+        </Console>
+        <RollingFile name="all" fileName="${log-path}/api.log"
+                     filePattern="${log-path}/$${date:yyyy-MM}/api_%d{yyyy-MM-dd}-%i.log">
+            <!-- 只输出info级别日志-->
+            <ThresholdFilter level="${level}" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout charset="${charset}" pattern="${pattern-format}"/>
+            <Policies>
+                <!-- 表示隔x天进行压缩 -->
+                <TimeBasedTriggeringPolicy modulate="true" interval="1"/>
+                <!-- 表示单个文件最大多少容量进行压缩 -->
+                <SizeBasedTriggeringPolicy size="51200 KB"/>
+            </Policies>
+            <!-- 压缩包最多保留30个 -->
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+        <RollingFile name="warnLog" fileName="${log-path}/warn.log"
+                     filePattern="${log-path}/$${date:yyyy-MM}/warn_%d{yyyy-MM-dd}-%i.log">
+            <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout charset="${charset}" pattern="${pattern-format}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy modulate="true" interval="1"/>
+                <SizeBasedTriggeringPolicy size="51200 KB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+        <RollingFile name="errorLog" fileName="${log-path}/error.log"
+                     filePattern="${log-path}/$${date:yyyy-MM}/error_%d{yyyy-MM-dd}-%i.log">
+            <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout charset="${charset}" pattern="${pattern-format}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy modulate="true" interval="1"/>
+                <SizeBasedTriggeringPolicy size="51200 KB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+        <RollingFile name="test" fileName="${log-path}/test.log"
+                     filePattern="${log-path}/$${date:yyyy-MM}/test_%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout charset="${charset}" pattern="${pattern-format}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy modulate="true" interval="1"/>
+                <SizeBasedTriggeringPolicy size="51200 KB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <!--控制第三方log级别-->
+        <AsyncLogger name="org.apache.ibatis.logging.jdbc" level="DEBUG"/>
+        <!-- 特定文件的输出 -->
+        <AsyncLogger name="test" level="info">
+            <AppenderRef ref="test"/>
+        </AsyncLogger>
+        <!-- 通用输出 -->
+        <AsyncRoot level="INFO" includeLocation="${includeLocation}">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="all"/>
+            <AppenderRef ref="warnLog"/>
+            <AppenderRef ref="errorLog"/>
+        </AsyncRoot>
+    </Loggers>
+</Configuration>
