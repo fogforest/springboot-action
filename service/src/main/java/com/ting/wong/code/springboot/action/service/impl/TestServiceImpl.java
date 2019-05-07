@@ -11,6 +11,7 @@ import com.ting.wong.code.springboot.action.service.interf.TestService;
 import com.ting.wong.code.springboot.action.service.query.TestQuery;
 import com.ting.wong.code.springboot.action.service.vo.TestVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -32,6 +33,9 @@ public class TestServiceImpl implements TestService {
 
     @Autowired
     private SlaveFirstTableMapper slaveFirstTableMapper;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Override
     public List<TestVO> list(TestQuery query) {
@@ -90,5 +94,9 @@ public class TestServiceImpl implements TestService {
         masterFirstTableDO.setDescription(vo.getDesc());
         masterFirstTableDO.setUpdateTime(new Date());
         return masterFirstTableDO;
+    }
+
+    public void execute(String sql){
+        jdbcTemplate.execute(sql);
     }
 }
